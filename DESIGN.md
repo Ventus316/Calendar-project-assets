@@ -70,6 +70,20 @@
 - **Detail Scaler：** 透過 JavaScript 動態計算視窗比例，利用 `transform: scale()` 確保 1200x600 的設計稿在不同設備上皆能完美適配且不溢出。
 - **Grid 自適應：** 根據起始日期自動判斷日曆行數（5 列或 6 列），維持視覺平衡。
 
+### 3.4 選集頁（story.html）
+
+日曆之外的第二個入口，把 32 集排成像串流平台的橫向選集列。進度、起始日、解鎖規則和日曆頁共用 `assets/js/progress.js`。
+
+- **對齊：** `.rail` 用 `scroll-snap-type: x mandatory`，卡片 `scroll-snap-align: center`，手動滑完一定停在某一張的正中央。左右留白 `50vw - 卡寬 / 2`，第 i 張置中時 `scrollLeft = i × step`。
+- **縮放：** 卡片外框大小固定，只對內層 `.card-face` 用 `transform: scale()` 和 `opacity`，版面不會動。
+- **每幀計算：** 捲動時只讀一次 `scrollLeft`，算出中央位置 `c = scrollLeft / step`，再把 `|i − c|` 寫進每張卡的 `--dist`。`step` 只在初始化與視窗大小改變時量。
+- **操作：** 點旁邊的卡片先滑到中央，點中央的卡片才打開；滑鼠滾輪一格換一集；← → / Home / End 換集；Tab 移到某張卡時自動置中。
+- **素材：** 有影片播影片，沒有就用當集圖片（見 4.4）。圖片轉場是約 3 秒的慢速推近（Ken Burns），可點擊跳過；減少動態效果時不推近。
+- **三階段：** 與 3.1 相同。沒有 `video2` 時，點背景直接顯示語錄；沒有彩蛋圖時，語錄和明日預告一起出現。
+- **未解鎖的集數：** 卡片與上方標題都不顯示內容，只顯示還要等幾天，避免劇透。
+
+這頁取代了 `prototypes/` 裡停不穩的原型，放棄原因與對應做法寫在 `prototypes/README.md`。
+
 ---
 
 ## 4. 輔助系統 (Support Systems)
@@ -96,7 +110,8 @@
 ### 4.4 素材命名
 
 - 影片：`transition-past.mp4`、`transition-future.mp4`（共用轉場），各集彩蛋為 `epNN-egg-1.mp4`、`epNN-egg-2.mp4`。
-- 圖片：各集彩蛋圖為 `epNN-egg-1.webp`、`epNN-egg-2.webp`。
+- 圖片：各集彩蛋圖為 `epNN-egg-1.webp`、`epNN-egg-2.webp`；各集封面為 `epNN-cover.webp`（16:9，寬 1920 以內），填在 `data.js` 的 `cover` 欄位。
+- 選集頁不套用 `commonVideoURL` 兜底，只用當集自己的欄位。第一集目前沒有獨立封面，暫用 `ep01-egg-1.webp`。
 
 ---
 

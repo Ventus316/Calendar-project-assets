@@ -751,3 +751,25 @@ html, body {
     #finale { animation: none; }
     #toast { transition: none; }
 }
+
+/* =========================================
+   切到選集頁的連結
+   ========================================= */
+.mode-link {
+    position: fixed;
+    right: 16px;
+    bottom: 12px;
+    z-index: 40;
+    color: #b0a4a4;
+    text-decoration: none;
+    font-size: 13px;
+    letter-spacing: 2px;
+    border: 1px solid rgba(176, 164, 164, 0.4);
+    border-radius: 30px;
+    padding: 5px 14px;
+    background: rgba(0, 0, 0, 0.35);
+    transition: color 0.3s, border-color 0.3s;
+}
+
+.mode-link:hover,
+.mode-link:focus-visible { color: #d4af37; border-color: #d4af37; outline: none; }

@@ -135,14 +135,27 @@ if (producerInfo) {
     });
 }
 
+// ==========================================
+//  頁內提示訊息 (取代 alert)
+// ==========================================
+let toastTimer = null;
+function showToast(message, duration = 2600) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('visible'), duration);
+}
+
 function toggleDevMode() {
-    isDevMode = !isDevMode; 
+    isDevMode = !isDevMode;
     if (isDevMode) {
-        alert("🔧 開發者模式已開啟");
+        showToast("🔧 開發者模式已開啟");
         producerInfo.style.color = "#ff4444"; 
         if(debugPanel) debugPanel.classList.add('active');
     } else {
-        alert("🔒 開發者模式已關閉");
+        showToast("🔒 開發者模式已關閉");
         producerInfo.style.color = ""; 
         if(debugPanel) debugPanel.classList.remove('active');
     }
@@ -154,7 +167,7 @@ function setDebugDate() {
     if(!newVal) return;
     startDate = parseLocalDate(newVal);
     localStorage.setItem('loveCalendarStartDate', newVal);
-    alert(`起始日已更新為：${newVal}\n日曆將重新排列。`);
+    showToast(`起始日已更新為 ${newVal}，日曆已重新排列`);
     renderCalendar(); 
 }
 
@@ -278,9 +291,15 @@ function handleClick(index) {
     
     // 防止點擊未來日期
     if (!isDevMode && (index > unlockedIndex || index > daysPassed)) {
-        // 只有點擊「明天」(下一格) 才跳提示
-        if (index === daysPassed + 1) {
-            alert("⏳ 還沒到這一天喔！請明天再來。");
+        if (index > daysPassed) {
+            // 日子還沒到
+            const wait = index - daysPassed;
+            showToast(wait === 1 ? "⏳ 還沒到這一天，明天再來吧" : `⏳ 還要再等 ${wait} 天`);
+        } else {
+            // 日子到了，但前面還有沒看的
+            const next = new Date(startDate);
+            next.setDate(startDate.getDate() + unlockedIndex);
+            showToast(`先打開 ${next.getMonth() + 1} / ${next.getDate()} 那一格吧`);
         }
         return;
     }
@@ -490,11 +509,45 @@ function closeDetail() {
         interactionArea.classList.add('hidden-initially');
     }
 
+    let justFinished = false;
     if (currentViewingIndex === unlockedIndex) {
         unlockedIndex++;
         localStorage.setItem('loveCalendarProgress', unlockedIndex);
+        justFinished = (unlockedIndex === episodes.length);
     }
     renderCalendar();
+    if (justFinished) showFinale();
+}
+
+// ==========================================
+//  完結頁：第 32 天第一次看完時顯示
+// ==========================================
+const finale = document.getElementById('finale');
+const finaleClose = document.getElementById('finale-close');
+
+function showFinale() {
+    if (!finale) return;
+    const last = new Date(startDate);
+    last.setDate(startDate.getDate() + episodes.length - 1);
+    const fmt = (dt) => `${String(dt.getMonth() + 1).padStart(2, '0')} / ${String(dt.getDate()).padStart(2, '0')}`;
+    document.getElementById('finale-range').textContent = `${fmt(startDate)} — ${fmt(last)}`;
+    document.getElementById('finale-hint').textContent = episodes[episodes.length - 1].nextHint;
+    finale.hidden = false;
+    finaleClose.focus();
+}
+
+function hideFinale() {
+    finale.hidden = true;
+    const lastCell = calendar.querySelector(`.date-cell[data-idx="${episodes.length - 1}"]`);
+    if (lastCell) lastCell.focus();
+}
+
+if (finale) {
+    finaleClose.addEventListener('click', hideFinale);
+    finale.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hideFinale();
+        e.stopPropagation();
+    });
 }
 
 // 【修正】重置功能 - 提供兩種選擇

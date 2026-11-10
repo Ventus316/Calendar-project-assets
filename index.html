@@ -89,6 +89,18 @@
     
     <button class="reset-btn" onclick="resetProgress()">↻ 重置進度</button>
 
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <div id="finale" role="dialog" aria-modal="true" aria-labelledby="finale-title" hidden>
+        <div class="finale-card">
+            <p class="finale-range" id="finale-range"></p>
+            <h2 id="finale-title">32 天，全部走完了</h2>
+            <p class="finale-text">從重逢到圓滿，謝謝你每天回來打開一格。</p>
+            <p class="finale-hint" id="finale-hint"></p>
+            <button id="finale-close" type="button">回到日曆</button>
+        </div>
+    </div>
+
     <div id="debug-panel">
         <h3>🔧 開發者測試面板</h3>
         <p>設定 Day 1 起始日期：</p>

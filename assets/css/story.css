@@ -136,7 +136,16 @@ button { font: inherit; color: inherit; }
 .hero-state.today { color: var(--orange); }
 
 /* ---------- 滑動選集列 ---------- */
-.rail-wrap { position: relative; }
+/* 閒置時選集條淡出、往下沉，讓背景劇照的主角露出來；滑動、滑鼠移過來、按鍵時再浮回來 */
+.rail-wrap {
+    position: relative;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.rail-wrap.idle {
+    opacity: 0.22;
+    transform: translateY(16px);
+}
 
 /* 交給瀏覽器對齊：scroll-snap 讓手動滑完一定停在某一張的正中央 */
 .rail {
@@ -175,7 +184,9 @@ button { font: inherit; color: inherit; }
     /* --dist：這張卡離中央幾張（0 = 正中央），由 story.js 依捲動位置算好寫進來 */
     transform: scale(calc(1 - min(var(--dist), 1) * 0.18));
     opacity: calc(1 - min(var(--dist), 1.6) * 0.32);
-    will-change: transform, opacity;
+    /* 聚焦感：正中央清楚，離越遠越模糊（最多 6px） */
+    filter: blur(calc(min(var(--dist), 2) * 3px));
+    will-change: transform, opacity, filter;
 }
 
 .card-face img {
@@ -628,6 +639,7 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
     .card.today .card-face { animation: none; }
     .click-ripple { display: none; }
+    .rail-wrap { transition: none; }
     .intro.is-image.active img { animation: none; }
     .backdrop-layer, .step, .eggs, .hint, #toast { transition: none; }
     .detail, .lightbox, #finale { animation: none; }

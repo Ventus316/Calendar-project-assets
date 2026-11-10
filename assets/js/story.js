@@ -229,6 +229,31 @@ rail.addEventListener('keydown', (e) => {
 });
 
 // ==========================================
+//  選集條閒置淡出
+// ==========================================
+// 不操作 3 秒後選集條變淡，背景劇照的主角才不會被擋住。
+// 滑動、滾輪、按鍵、觸控，或滑鼠移到選集條上時浮回來；滑鼠停在選集條上或鍵盤焦點在卡片上就不淡出。
+const railWrap = document.querySelector('.rail-wrap');
+const RAIL_IDLE_MS = 3000;
+let railIdleTimer = null;
+
+function wakeRail() {
+    railWrap.classList.remove('idle');
+    clearTimeout(railIdleTimer);
+    railIdleTimer = setTimeout(() => {
+        const hovering = railWrap.matches(':hover');
+        const keyboardFocus = railWrap.contains(document.activeElement) && document.activeElement.matches(':focus-visible');
+        if (hovering || keyboardFocus) wakeRail();
+        else railWrap.classList.add('idle');
+    }, RAIL_IDLE_MS);
+}
+
+['pointermove', 'pointerdown', 'focusin'].forEach(type => railWrap.addEventListener(type, wakeRail));
+rail.addEventListener('scroll', wakeRail, { passive: true });
+['wheel', 'keydown', 'touchstart'].forEach(type =>
+    document.addEventListener(type, wakeRail, { passive: true }));
+
+// ==========================================
 //  上方資訊與背景
 // ==========================================
 let backdropTimer = null;
@@ -589,6 +614,7 @@ const first = startIndex();
 goTo(first, false);
 updateFrame();
 preloadIntro(first);
+wakeRail();
 
 // 字型和圖片載完後版面可能還會變，瀏覽器會把捲動位置重設；使用者還沒動過就再對一次
 let userMoved = false;

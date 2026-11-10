@@ -94,7 +94,7 @@ if(debugInput) debugInput.value = startDate.toISOString().split('T')[0];
 // ==========================================
 function safeGetVideoPath(epIndex, videoNum) {
     if (typeof getVideoPath === 'function') return getVideoPath(epIndex, videoNum);
-    return "./assets/videos/past-100~1.mp4";
+    return "./assets/videos/transition-past.mp4";
 }
 
 function safeGetEasterEggPath(epIndex, imgNum) {

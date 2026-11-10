@@ -2,7 +2,7 @@
 //  共用素材設定 (兜底用)
 // ==========================================
 // 當集數的 video 欄位留空時，會自動播放這個影片
-const commonVideoURL = "./assets/videos/past-100~1.mp4";
+const commonVideoURL = "./assets/videos/transition-past.mp4";
 // 當集數的 easterEggImg 欄位留空時使用的測試彩蛋圖
 const commonEasterEggImg = "./assets/images/Ep1-egg.png";  
 
@@ -15,10 +15,10 @@ const episodes = [
         title: "再見，桑延", 
         quote: "再見，溫以凡", 
         nextHint: "那個名字，我在心裡默唸了無數遍", 
-        video1: "./assets/videos/past-100~1.mp4", 
-        video2: "./assets/videos/future-100~1.mp4", 
-        video3: "./assets/videos/Ep1-merge~1.mp4", 
-        video4: "./assets/videos/Ep1-merge2~1.mp4", 
+        video1: "./assets/videos/transition-past.mp4", 
+        video2: "./assets/videos/transition-future.mp4", 
+        video3: "./assets/videos/ep01-egg-1.mp4", 
+        video4: "./assets/videos/ep01-egg-2.mp4", 
         easterEggImg: "./assets/images/Ep1-egg.png", 
         easterEggImg2: "./assets/images/Ep1-egg2.png"
     },

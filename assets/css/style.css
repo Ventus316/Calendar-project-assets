@@ -547,30 +547,38 @@ html, body {
 
 .reset-btn:hover { color: white; background: rgba(200, 50, 50, 0.8); border-color: red; }
 
+/* 放在右下角（「選集模式」上方），不蓋住左邊的日曆；寬度跟著內容，提示文字不換行 */
 #debug-panel {
     position: fixed;
-    bottom: -200px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 300px;
+    right: 16px;
+    bottom: 56px;
+    width: max-content;
+    max-width: calc(100vw - 32px);
     background: rgba(0, 0, 0, 0.9);
     border: 1px solid #d4af37;
-    border-radius: 10px 10px 0 0;
-    padding: 20px;
+    border-radius: 10px;
+    padding: 16px 20px;
     color: #fff;
     z-index: 300;
-    transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(24px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
 }
 
 #debug-panel.active {
-    bottom: 0;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
 }
+
+#debug-panel h3 { font-size: 16px; color: #d4af37; margin-bottom: 8px; }
+#debug-panel p { font-size: 13px; margin-bottom: 8px; }
+#debug-panel .debug-hint { color: #b0a4a4; margin: 0; }
 
 .debug-controls {
     display: flex;
     gap: 10px;
-    justify-content: center;
     margin-bottom: 10px;
 }
 

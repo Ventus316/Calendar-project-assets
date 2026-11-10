@@ -17,7 +17,7 @@
     </div>
 
     <header class="topbar">
-        <p class="brand">難哄 <span>32 DAYS</span></p>
+        <p class="brand" id="brand">難哄 <span>32 DAYS</span></p>
         <a class="mode-link" href="./index.html">日曆模式</a>
     </header>
 
@@ -74,6 +74,17 @@
             <p class="finale-hint" id="finale-hint"></p>
             <button id="finale-close" type="button">回到選集</button>
         </div>
+    </div>
+
+    <!-- 開發者模式：連點左上角「難哄」5 次 -->
+    <div id="debug-panel">
+        <h3>🔧 開發者測試面板</h3>
+        <p>設定 Day 1 起始日期：</p>
+        <div class="debug-controls">
+            <input type="date" id="debug-date-input">
+            <button type="button" id="debug-apply">確認修改</button>
+        </div>
+        <p class="debug-hint">選集將以該日期作為第 1 天重新排列，所有集數都能打開。</p>
     </div>
 
     <script src="./assets/js/data.js"></script>

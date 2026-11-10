@@ -44,6 +44,8 @@ const IMAGE_INTRO_MS = 3200;
 // ==========================================
 //  素材與狀態
 // ==========================================
+let isDevMode = false;
+
 const has = (v) => typeof v === 'string' && v.trim() !== '';
 
 // 只看當集自己的欄位，不用 data.js 的兜底影片（那支是第一集的）
@@ -65,6 +67,8 @@ function mediaOf(i) {
 }
 
 function statusOf(i) {
+    // 開發者模式：每一集都能打開（和日曆頁一樣，目前進度那集顯示為今天）
+    if (isDevMode) return i === unlockedIndex ? 'today' : 'read';
     if (i < unlockedIndex) return 'read';
     if (i === unlockedIndex && i <= getDaysPassed()) return 'today';
     return 'locked';
@@ -497,6 +501,44 @@ finaleClose.addEventListener('click', hideFinale);
 finale.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') hideFinale();
     e.stopPropagation();
+});
+
+// ==========================================
+//  開發者模式：連點左上角「難哄」5 次
+// ==========================================
+const brand = document.getElementById('brand');
+const debugPanel = document.getElementById('debug-panel');
+const debugInput = document.getElementById('debug-date-input');
+let devClickCount = 0;
+let devClickTimer = null;
+
+debugInput.value = formatLocalDate(startDate);
+
+brand.addEventListener('click', () => {
+    devClickCount++;
+    clearTimeout(devClickTimer);
+    devClickTimer = setTimeout(() => { devClickCount = 0; }, 1000);
+    if (devClickCount >= 5) {
+        devClickCount = 0;
+        toggleDevMode();
+    }
+});
+
+function toggleDevMode() {
+    isDevMode = !isDevMode;
+    showToast(isDevMode ? '🔧 開發者模式已開啟' : '🔒 開發者模式已關閉');
+    brand.classList.toggle('dev', isDevMode);
+    debugPanel.classList.toggle('active', isDevMode);
+    renderCards();
+}
+
+document.getElementById('debug-apply').addEventListener('click', () => {
+    const value = debugInput.value;
+    if (!value) return;
+    startDate = parseLocalDate(value);
+    localStorage.setItem('loveCalendarStartDate', value);
+    showToast(`起始日已更新為 ${value}，選集已重新排列`);
+    renderCards();
 });
 
 // ==========================================

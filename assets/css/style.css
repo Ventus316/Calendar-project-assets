@@ -26,7 +26,7 @@ html, body {
     width: 100vw;
     height: 100vh;
     display: flex;
-    background-image: url("../images/bj-gq.jpg");
+    background-image: url("../images/bj-gq.webp");
     background-size: cover;
     background-position: center;
     position: relative;
@@ -36,7 +36,7 @@ html, body {
     width: 50vw;
     height: 60vh;
     padding: 5px;
-    background-image: url("../images/heng.png");
+    background-image: url("../images/heng.webp");
     background-size: cover;
     background-position: center 30%;
     background-repeat: no-repeat;
@@ -597,7 +597,7 @@ html, body {
     width: 100vw;
     height: 100vh;
     display: flex;
-    background-image: url("../images/bj-gq.jpg"); /* 👈 把這行的註解拿掉 */
+    background-image: url("../images/bj-gq.webp"); /* 👈 把這行的註解拿掉 */
     background-size: cover;
     background-position: center;
     position: relative;

@@ -99,7 +99,7 @@ function safeGetVideoPath(epIndex, videoNum) {
 
 function safeGetEasterEggPath(epIndex, imgNum) {
     if (typeof getEasterEggPath === 'function') return getEasterEggPath(epIndex, imgNum);
-    return "./assets/images/Ep1-egg.png";
+    return "./assets/images/ep01-egg-1.webp";
 }
 
 // ==========================================

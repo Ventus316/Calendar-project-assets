@@ -623,7 +623,7 @@ html, body {
     background: rgba(255, 255, 255, 0.05);
     opacity: 0;
     transform: translate3d(-50%, -50%, 0) scale(0.5);
-    /* 動畫時間改為 2.5 秒 */
+    /* 動畫曲線拉長到 8 秒，但 main.js 在 2.5 秒就移除元素（RIPPLE_LIFETIME_MS），只呈現前段 */
     animation: ripple-wave 8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
 }
 

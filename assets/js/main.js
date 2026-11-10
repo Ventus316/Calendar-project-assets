@@ -94,12 +94,12 @@ if(debugInput) debugInput.value = startDate.toISOString().split('T')[0];
 // ==========================================
 function safeGetVideoPath(epIndex, videoNum) {
     if (typeof getVideoPath === 'function') return getVideoPath(epIndex, videoNum);
-    return "./assets/videos/transition-200.mp4"; 
+    return "./assets/videos/past-100~1.mp4";
 }
 
 function safeGetEasterEggPath(epIndex, imgNum) {
     if (typeof getEasterEggPath === 'function') return getEasterEggPath(epIndex, imgNum);
-    return "./assets/images/1-1.jpg";
+    return "./assets/images/Ep1-egg.png";
 }
 
 // ==========================================
@@ -301,7 +301,13 @@ function playTransition(videoUrl) {
     [playTimer, skipDisplayTimer, skipOpacityTimer].forEach(t => clearTimeout(t));
     skipBtn.classList.remove('visible', 'low-opacity');
 
-    transitionVideo.src = videoUrl;
+    // 若這支影片已經預載過，就不重設 src，直接沿用已緩衝的資料從頭播
+    const absoluteUrl = new URL(videoUrl, location.href).href;
+    if (transitionVideo.src === absoluteUrl) {
+        transitionVideo.currentTime = 0;
+    } else {
+        transitionVideo.src = videoUrl;
+    }
     transitionVideo.style.display = 'block';
     transitionVideo.play().catch(e => console.log("播放攔截", e));
 
@@ -515,12 +521,30 @@ function resetProgress() {
     });
 }
 
+// ==========================================
+//  影片預載：只預載一支
+// ==========================================
+// 今天能點的那一格（最新解鎖）優先；今天已經看完，就預載最近看過的那一集。
+// 只載第一段影片，因為點開日期一定先播 video1。
+function preloadLatestVideo() {
+    const daysPassed = getDaysPassed();
+    let target = (unlockedIndex <= daysPassed) ? unlockedIndex : unlockedIndex - 1;
+    target = Math.min(target, episodes.length - 1);
+    if (target < 0) return;
+
+    transitionVideo.preload = 'auto';
+    transitionVideo.src = safeGetVideoPath(target, 1);
+    transitionVideo.load();
+}
+
 renderCalendar();
 scaleDetailView();
+preloadLatestVideo();
 
 // ==========================================
 //  水波紋特效 (純淨穩定版 - 不需伺服器)
 // ==========================================
+const RIPPLE_LIFETIME_MS = 2500;
 document.addEventListener('mousedown', function(e) {
     const videoOverlay = document.getElementById('video-overlay');
     const detailView = document.getElementById('detail-view');
@@ -537,10 +561,12 @@ document.addEventListener('mousedown', function(e) {
     
     document.body.appendChild(ripple);
 
-    // 【防卡頓關鍵】：2.5 秒動畫播完後，立刻從網頁中徹底刪除！
+    // 刻意截斷：CSS 動畫長 8 秒，只取前 2.5 秒（擴散最快、最清楚的一段）就移除，
+    // 同時也避免大量 backdrop-filter 元素殘留造成卡頓。
+    // 要調整呈現時，請同時看 style.css 的 .click-ripple animation 長度。
     setTimeout(() => {
         if (ripple && ripple.parentNode) {
             ripple.parentNode.removeChild(ripple);
         }
-    }, 2500);
+    }, RIPPLE_LIFETIME_MS);
 });

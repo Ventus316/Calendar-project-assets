@@ -583,6 +583,31 @@ button { font: inherit; color: inherit; }
     font-weight: 700;
 }
 
+/* ---------- 水波紋（和日曆頁相同，見 style.css .click-ripple） ---------- */
+.click-ripple {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    backdrop-filter: blur(2px) brightness(1.1);
+    -webkit-backdrop-filter: blur(2px) brightness(1.1);
+    mask-image: radial-gradient(circle, transparent 65%, black 70%, transparent 75%);
+    -webkit-mask-image: radial-gradient(circle, transparent 65%, black 70%, transparent 75%);
+    background: rgba(255, 255, 255, 0.05);
+    opacity: 0;
+    transform: translate3d(-50%, -50%, 0) scale(0.5);
+    /* 動畫長 8 秒，story.js 在 2.5 秒就移除元素（RIPPLE_LIFETIME_MS），只呈現前段 */
+    animation: ripple-wave 8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes ripple-wave {
+    0% { transform: translate3d(-50%, -50%, 0) scale(0.5); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translate3d(-50%, -50%, 0) scale(30); opacity: 0; }
+}
+
 /* ---------- 手機 ---------- */
 @media (max-width: 600px) {
     :root { --card-w: 68vw; }
@@ -599,6 +624,7 @@ button { font: inherit; color: inherit; }
 /* ---------- 減少動態效果 ---------- */
 @media (prefers-reduced-motion: reduce) {
     .card.today .card-face { animation: none; }
+    .click-ripple { display: none; }
     .intro.is-image.active img { animation: none; }
     .backdrop-layer, .step, .eggs, .hint, #toast { transition: none; }
     .detail, .lightbox, #finale { animation: none; }

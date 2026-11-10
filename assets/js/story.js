@@ -542,6 +542,23 @@ document.getElementById('debug-apply').addEventListener('click', () => {
 });
 
 // ==========================================
+//  水波紋特效（和日曆頁相同）
+// ==========================================
+// 用 mousedown：手機上手指滑動選集列不會觸發，只有點擊才有水波。
+// 刻意截斷：CSS 動畫長 8 秒，只取前 2.5 秒就移除，也避免模糊圖層堆積。
+const RIPPLE_LIFETIME_MS = 2500;
+document.addEventListener('mousedown', (e) => {
+    // 看轉場、當集內容、彩蛋圖時不產生水波
+    if (intro.classList.contains('active') || !detail.hidden || !lightbox.hidden) return;
+    const ripple = document.createElement('div');
+    ripple.className = 'click-ripple';
+    ripple.style.left = e.clientX + 'px';
+    ripple.style.top = e.clientY + 'px';
+    document.body.appendChild(ripple);
+    setTimeout(() => ripple.remove(), RIPPLE_LIFETIME_MS);
+});
+
+// ==========================================
 //  預載：只預載起始那一集的轉場
 // ==========================================
 function preloadIntro(i) {

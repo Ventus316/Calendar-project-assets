@@ -200,7 +200,8 @@ function renderCalendar() {
         el.className = 'days';     
         el.innerText = '';         
         el.removeAttribute('data-idx');
-        el.onclick = null;         
+        ['role', 'tabindex', 'aria-label', 'aria-disabled'].forEach(a => el.removeAttribute(a));
+        el.onclick = null;
     });
 
     let cellCursor = 0;
@@ -251,6 +252,15 @@ function renderCalendar() {
                     cell.classList.add('locked');
                 }
             }
+
+            // 鍵盤與螢幕閱讀器：日期格可以用 Tab 移動、Enter / 空白鍵打開
+            let stateText = '尚未解鎖';
+            if (cell.classList.contains('read')) stateText = '已看過';
+            else if (cell.classList.contains('active-day')) stateText = '今天可以打開';
+            cell.setAttribute('role', 'button');
+            cell.setAttribute('tabindex', '0');
+            cell.setAttribute('aria-label', `${thisDate.getMonth() + 1} 月 ${d} 日，第 ${i + 1} 天，${stateText}`);
+            if (cell.classList.contains('locked')) cell.setAttribute('aria-disabled', 'true');
 
             cell.onclick = () => handleClick(i);
             cellCursor++;
@@ -422,6 +432,51 @@ if(easterEggBtn2) {
         playTransition(safeGetVideoPath(currentViewingIndex, 4));
     });
 }
+
+// 5. 鍵盤操作
+const isActivateKey = (e) => e.key === 'Enter' || e.key === ' ';
+
+// 日期格：Enter / 空白鍵等於點擊
+calendar.addEventListener('keydown', (e) => {
+    if (isActivateKey(e) && e.target.classList.contains('date-cell')) {
+        e.preventDefault();
+        e.target.click();
+    }
+});
+
+// 彩蛋圖：可以用 Tab 選到，Enter / 空白鍵播放
+[easterEggBtn1, easterEggBtn2].forEach((btn, n) => {
+    if (!btn) return;
+    btn.setAttribute('role', 'button');
+    btn.setAttribute('tabindex', '0');
+    btn.setAttribute('aria-label', `播放彩蛋影片 ${n + 1}`);
+    btn.addEventListener('keydown', (e) => {
+        if (isActivateKey(e)) {
+            e.preventDefault();
+            e.stopPropagation();
+            btn.click();
+        }
+    });
+});
+
+// 卡片打開時：Enter / 空白鍵 / → 等於點背景（下一步）；影片播放中按 Esc 等於 SKIP
+document.addEventListener('keydown', (e) => {
+    if (videoOverlay.classList.contains('active')) {
+        if (e.key === 'Escape' && skipBtn.classList.contains('visible')) skipVideo();
+        return;
+    }
+    if (!detailView.classList.contains('active')) return;
+    if (e.target.closest && e.target.closest('.egg-item, button, input')) return;
+    if (isActivateKey(e) || e.key === 'ArrowRight') {
+        e.preventDefault();
+        detailOverlay.click();
+        // 關閉卡片後把焦點放回剛剛看的那一格
+        if (!detailView.classList.contains('active')) {
+            const cell = calendar.querySelector(`.date-cell[data-idx="${currentViewingIndex}"]`);
+            if (cell) cell.focus();
+        }
+    }
+});
 
 function closeDetail() {
     detailView.classList.remove('active');

@@ -633,3 +633,21 @@ html, body {
     /* scale(30) 保證波紋可以擴散到全螢幕邊緣 */
     100% { transform: translate3d(-50%, -50%, 0) scale(30); opacity: 0; } 
 }
+
+/* =========================================
+   無障礙：鍵盤焦點與減少動態效果
+   ========================================= */
+.days:focus-visible,
+.egg-item:focus-visible,
+#skip-btn:focus-visible,
+.reset-btn:focus-visible {
+    outline: 2px solid #d4af37;
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .days.active-day { animation: none; }
+    .days,
+    .days:not(.locked):hover { transition: none; }
+    .click-ripple { display: none; }
+}

@@ -13,14 +13,29 @@ let lastViewedIndex = -1;
 let savedStartDate = localStorage.getItem('loveCalendarStartDate');
 let startDate;
 
+// "YYYY-MM-DD" 要用當地時間建立；直接 new Date("2025-12-01") 會被當成 UTC，
+// 在 UTC 以西的時區會變成前一天
+function parseLocalDate(value) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return new Date(value);
+}
+
+function formatLocalDate(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
 if (savedStartDate) {
     // 1. 如果記憶體有存檔 (代表不是第一次來)，讀取舊的日期
-    startDate = new Date(savedStartDate);
+    startDate = parseLocalDate(savedStartDate);
 } else {
     // 2. 如果記憶體沒東西 (代表是第一次打開！)，以「今天」作為開始
     startDate = new Date();
     // 【關鍵修改】立刻把它存入 localStorage！鎖定這一天！
-    localStorage.setItem('loveCalendarStartDate', startDate.toISOString());
+    localStorage.setItem('loveCalendarStartDate', formatLocalDate(startDate));
 }
 
 // 【新增】計算目前過了幾天
@@ -33,7 +48,8 @@ function getDaysPassed() {
     start.setHours(0, 0, 0, 0);
     
     const diffTime = now - start;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    // 用 round 而不是 floor：遇到日光節約時間，一天可能只有 23 小時
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     
     // 確保不會是負數 (例如使用者把電腦時間調到過去)
     return Math.max(0, diffDays); 
@@ -86,7 +102,7 @@ const MONTH_NAMES = [
     "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
 ];
 
-if(debugInput) debugInput.value = startDate.toISOString().split('T')[0];
+if(debugInput) debugInput.value = formatLocalDate(startDate);
 
 
 // ==========================================
@@ -136,7 +152,7 @@ function toggleDevMode() {
 function setDebugDate() {
     const newVal = debugInput.value;
     if(!newVal) return;
-    startDate = new Date(newVal);
+    startDate = parseLocalDate(newVal);
     localStorage.setItem('loveCalendarStartDate', newVal);
     alert(`起始日已更新為：${newVal}\n日曆將重新排列。`);
     renderCalendar(); 
@@ -540,6 +556,30 @@ function preloadLatestVideo() {
 renderCalendar();
 scaleDetailView();
 preloadLatestVideo();
+
+// ==========================================
+//  跨過午夜時自動解鎖新的一天
+// ==========================================
+// 只在日曆畫面時重繪，避免打斷正在看的影片或卡片
+function refreshIfIdle() {
+    if (videoOverlay.classList.contains('active') || detailView.classList.contains('active')) return;
+    renderCalendar();
+}
+
+function scheduleMidnightRefresh() {
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    setTimeout(() => {
+        refreshIfIdle();
+        scheduleMidnightRefresh();
+    }, nextMidnight - now + 1000);
+}
+scheduleMidnightRefresh();
+
+// 分頁切回來時也重繪一次（電腦睡眠時計時器可能不準）
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshIfIdle();
+});
 
 // ==========================================
 //  水波紋特效 (純淨穩定版 - 不需伺服器)

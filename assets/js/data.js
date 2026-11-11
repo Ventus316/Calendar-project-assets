@@ -1,17 +1,9 @@
 // ==========================================
-//  共用素材設定 (兜底用)
-// ==========================================
-// 當集數的 video 欄位留空時，會自動播放這個影片
-const commonVideoURL = "./assets/videos/transition-past.mp4";
-// 當集數的 easterEggImg 欄位留空時使用的測試彩蛋圖
-const commonEasterEggImg = "./assets/images/ep01-egg-1.webp";  
-
-// ==========================================
 //  資料庫：包含 32 集的所有文案、影片路徑與圖片路徑
 // ==========================================
-// cover：當集封面（選集頁的卡片封面和轉場圖），命名 epNN-cover.webp。
-// 選集頁 story.html 只用當集自己的欄位：有影片播影片，沒有就用 cover / 彩蛋圖，
-// 不會套用上面的兜底影片。日曆頁 index.html 仍照舊使用兜底。
+// cover：當集封面（選集頁的卡片封面、轉場圖、當集卡片的淡背景），命名 epNN-cover.webp。
+// 日曆頁和選集頁都只用當集自己的欄位（episode.js）：有影片播影片，沒有就用 cover / 彩蛋圖，
+// 欄位留空就略過，不套用其他集的素材。
 const episodes = [
     { 
         ep: "EP 01", 
@@ -306,39 +298,3 @@ const episodes = [
         easterEggImg: "./assets/images/ep32-egg-1.webp", easterEggImg2: "./assets/images/ep32-egg-2.webp" 
     }
 ];
-
-// ==========================================
-//  輔助函式：自動判斷影片路徑
-// ==========================================
-function getVideoPath(epIndex, videoNum) {
-    const data = episodes[epIndex];
-    let specificPath = "";
-    
-    if (videoNum === 1) specificPath = data.video1;
-    else if (videoNum === 2) specificPath = data.video2;
-    else if (videoNum === 3) specificPath = data.video3;
-    else if (videoNum === 4) specificPath = data.video4;
-    
-    if (specificPath && specificPath.trim() !== "") {
-        return specificPath;
-    }
-    
-    return commonVideoURL;
-}
-
-// ==========================================
-//  輔助函式：自動判斷彩蛋圖片
-// ==========================================
-function getEasterEggPath(epIndex, imgNum = 1) {
-    const data = episodes[epIndex];
-    let specificPath = "";
-    
-    if (imgNum === 1) specificPath = data.easterEggImg;
-    else if (imgNum === 2) specificPath = data.easterEggImg2; 
-    
-    if (specificPath && specificPath.trim() !== "") {
-        return specificPath;
-    }
-    
-    return commonEasterEggImg;
-}

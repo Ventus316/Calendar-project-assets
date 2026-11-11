@@ -9,6 +9,7 @@
     <link rel="preload" href="./assets/images/heng.webp" as="image" type="image/webp">
 
     <link rel="stylesheet" href="./assets/css/style.css">
+    <link rel="stylesheet" href="./assets/css/episode.css">
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
@@ -46,45 +47,7 @@
             <div class="days ndays">04</div> <div class="days ndays">05</div>
         </div>
 
-        <div id="video-overlay">
-            <video id="transition-video" playsinline preload="auto">
-                您的瀏覽器不支援 HTML5 影片。
-            </video>
-            <button id="skip-btn" onclick="skipVideo()">SKIP ⏭</button>
-        </div>
-
-        <div id="detail-overlay"></div>
-
-        <div id="detail-view">
-            <div class="detail-scaler" id="detail-scaler">
-                
-                <div class="detail-date" id="display-date">12 / 28</div>
-
-                <div class="content-body">
-                    <div class="detail-title hidden-initially" id="display-title">標題</div>
-                    <div class="detail-text hidden-initially" id="display-quote">內文</div>
-                </div>
-
-                <div class="interaction-area hidden-initially" id="interaction-area">
-                    
-                    <div class="layer-images" id="egg-group">
-                        <div id="easter-egg-btn" class="egg-item">
-                            <img id="easter-egg-img" src="" alt="彩蛋1">
-                        </div>
-                        <div id="easter-egg-btn-2" class="egg-item">
-                            <img id="easter-egg-img-2" src="" alt="彩蛋2">
-                        </div>
-                    </div>
-
-                    <div class="layer-hint" id="hint-layer">
-                        <div class="hint-left">See you tomorrow</div>
-                        <div class="hint-right" id="display-hint"></div>
-                    </div>
-
-                </div>
-
-            </div>
-        </div>
+        <!-- 轉場、當集內容、彩蛋圖全螢幕由 episode.js 建立（和選集頁共用） -->
     </div>
     
     <button class="reset-btn" onclick="resetProgress()">↻ 重置進度</button>
@@ -114,6 +77,7 @@
 
     <script src="./assets/js/data.js"></script>
     <script src="./assets/js/progress.js"></script>
+    <script src="./assets/js/episode.js"></script>
     <script src="./assets/js/main.js"></script>
 </body>
 </html>

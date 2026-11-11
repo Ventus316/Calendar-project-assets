@@ -3,8 +3,6 @@
 // ==========================================
 
 // 進度、起始日與 getDaysPassed() 在 progress.js（日曆頁和選集頁共用）
-let currentViewingIndex = -1; 
-let lastViewedIndex = -1;
 
 // 開發者模式
 let isDevMode = false;
@@ -13,39 +11,10 @@ let devClickTimer = null;
 
 // DOM 元素選取
 const calendar = document.getElementById('calendar-container');
-const videoOverlay = document.getElementById('video-overlay');
-const detailView = document.getElementById('detail-view');
-const detailScaler = document.getElementById('detail-scaler'); 
-const transitionVideo = document.getElementById('transition-video');
-const skipBtn = document.getElementById('skip-btn');
-const detailOverlay = document.getElementById('detail-overlay');
 const producerInfo = document.querySelector('.producer-info'); 
 const debugPanel = document.getElementById('debug-panel');
 const debugInput = document.getElementById('debug-date-input');
 
-// 卡片內容元素
-const detailTitle = document.getElementById('display-title');
-const detailQuote = document.getElementById('display-quote');
-const detailHint = document.getElementById('display-hint');
-
-// 互動區選取
-const interactionArea = document.getElementById('interaction-area');
-const easterEggBtn1 = document.getElementById('easter-egg-btn');
-const easterEggBtn2 = document.getElementById('easter-egg-btn-2');
-const easterEggImg1 = document.getElementById('easter-egg-img');
-const easterEggImg2 = document.getElementById('easter-egg-img-2');
-
-// 狀態管理
-// 0: 初始狀態
-// 1: 階段一 (播完 Video 1，顯示 Title)
-// 2: 階段二 (播完 Video 2，完整顯示全內容 - 圖片狀態)
-// 3: 階段三 (點擊背景後 - 文字狀態)
-let currentStep = 0; 
-
-// 計時器
-let playTimer = null;
-let skipDisplayTimer = null;
-let skipOpacityTimer = null;
 
 // 月份名稱
 const MONTH_NAMES = [
@@ -55,19 +24,6 @@ const MONTH_NAMES = [
 
 if(debugInput) debugInput.value = formatLocalDate(startDate);
 
-
-// ==========================================
-//  輔助函式
-// ==========================================
-function safeGetVideoPath(epIndex, videoNum) {
-    if (typeof getVideoPath === 'function') return getVideoPath(epIndex, videoNum);
-    return "./assets/videos/transition-past.mp4";
-}
-
-function safeGetEasterEggPath(epIndex, imgNum) {
-    if (typeof getEasterEggPath === 'function') return getEasterEggPath(epIndex, imgNum);
-    return "./assets/images/ep01-egg-1.webp";
-}
 
 // ==========================================
 //  開發者模式
@@ -124,19 +80,8 @@ function setDebugDate() {
 
 
 // ==========================================
-//  UI 縮放與渲染
+//  日曆渲染
 // ==========================================
-function scaleDetailView() {
-    const containerWidth = detailView.offsetWidth;
-    const containerHeight = detailView.offsetHeight;
-    const contentWidth = 1200; 
-    const contentHeight = 600; 
-    let scale = Math.min(containerWidth / contentWidth, containerHeight / contentHeight);
-    scale = Math.min(scale, 1);
-    detailScaler.style.transform = `scale(${scale})`;
-}
-window.addEventListener('resize', scaleDetailView);
-
 function setMonthTitle(dateObj) {
     const monthIndex = dateObj.getMonth();
     const fullMonth = MONTH_NAMES[monthIndex];
@@ -255,220 +200,27 @@ function handleClick(index) {
         return;
     }
 
-    currentViewingIndex = index;
-    currentStep = 0; 
-    
-    const data = episodes[index];
-    let thisDate = new Date(startDate);
-    thisDate.setDate(startDate.getDate() + index);
-    document.getElementById('display-date').innerText = `${(thisDate.getMonth() + 1).toString().padStart(2, '0')} / ${thisDate.getDate().toString().padStart(2, '0')}`;
-    
-    detailTitle.innerText = data.title;   
-    detailQuote.innerHTML = data.quote;   
-    detailHint.innerText = data.nextHint; 
-
-    easterEggImg1.src = safeGetEasterEggPath(index, 1); 
-    easterEggImg2.src = safeGetEasterEggPath(index, 2); 
-    
-    // 重置互動區：確保打開時是圖片
-    if(interactionArea) {
-        interactionArea.classList.remove('show-hint');
-        interactionArea.classList.add('hidden-initially');
-        interactionArea.classList.remove('reveal-content');
-    }
-
-    [detailTitle, detailQuote].forEach(el => {
-        el.classList.add('hidden-initially');
-        el.classList.remove('reveal-content');
-    });
-
-    playTransition(safeGetVideoPath(index, 1));
-}
-
-function playTransition(videoUrl) {
-    const resetBtn = document.querySelector('.reset-btn');
-    if(resetBtn) resetBtn.style.display = 'none';
-
+    // 打開後的轉場、當集卡片、彩蛋圖和選集頁共用（episode.js）
     calendar.classList.add('minimized');
-    videoOverlay.classList.add('active');
-    detailView.classList.remove('active'); 
-    if(detailOverlay) detailOverlay.classList.remove('active');
-    
-    [playTimer, skipDisplayTimer, skipOpacityTimer].forEach(t => clearTimeout(t));
-    skipBtn.classList.remove('visible', 'low-opacity');
-
-    // 若這支影片已經預載過，就不重設 src，直接沿用已緩衝的資料從頭播
-    const absoluteUrl = new URL(videoUrl, location.href).href;
-    if (transitionVideo.src === absoluteUrl) {
-        transitionVideo.currentTime = 0;
-    } else {
-        transitionVideo.src = videoUrl;
-    }
-    transitionVideo.style.display = 'block';
-    transitionVideo.play().catch(e => console.log("播放攔截", e));
-
-    skipDisplayTimer = setTimeout(() => {
-        skipBtn.classList.add('visible');
-        skipOpacityTimer = setTimeout(() => {
-            skipBtn.classList.add('low-opacity');
-        }, 5000); 
-    }, 5000);
-
-    transitionVideo.onended = finishTransition;
+    EpisodeView.open(index, (closed, justFinished) => {
+        calendar.classList.remove('minimized');
+        renderCalendar();
+        if (justFinished) { showFinale(); return; }
+        // 關閉卡片後把焦點放回剛剛看的那一格
+        const cell = calendar.querySelector(`.date-cell[data-idx="${closed}"]`);
+        if (cell) cell.focus({ preventScroll: true });
+    }, '點一下回到日曆');
 }
-
-function skipVideo() { finishTransition(); }
-
-function finishTransition() {
-    [playTimer, skipDisplayTimer, skipOpacityTimer].forEach(t => clearTimeout(t));
-    transitionVideo.onended = null;
-    transitionVideo.pause();
-    transitionVideo.style.display = 'none';
-
-    videoOverlay.classList.remove('active');
-    const resetBtn = document.querySelector('.reset-btn');
-    if(resetBtn) resetBtn.style.display = 'block';
-
-    scaleDetailView();
-    detailView.classList.add('active');
-    if(detailOverlay) detailOverlay.classList.add('active');
-
-    // 狀態機推進
-    if (currentStep === 0) {
-        currentStep = 1;
-        detailTitle.classList.add('reveal-content');
-    } else {
-        currentStep = 2;
-        [detailTitle, detailQuote].forEach(el => el.classList.add('reveal-content'));
-        
-        if(interactionArea) {
-            interactionArea.classList.add('reveal-content');
-        }
-    }
-}
-
 
 // ==========================================
-//  事件監聽
+//  鍵盤：日期格可以用 Tab 移動、Enter / 空白鍵打開
 // ==========================================
-
-// 1. 詳細頁遮罩點擊 (控制退出流程)
-if (detailOverlay) {
-    detailOverlay.addEventListener('click', function() {
-        if (currentStep === 1) {
-            playTransition(safeGetVideoPath(currentViewingIndex, 2));
-        }
-        else if (currentStep === 2) {
-            triggerHintEffect();
-            currentStep = 3; 
-        }
-        else if (currentStep === 3) {
-            closeDetail();
-        }
-    });
-}
-
-// 2. 影片遮罩點擊 (修正：阻止冒泡但不執行 skipVideo)
-if (videoOverlay) {
-    videoOverlay.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-}
-
-if (skipBtn) {
-    skipBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-}
-
-// 3. 觸發特效函式
-function triggerHintEffect() {
-    if(interactionArea) {
-        interactionArea.classList.add('show-hint');
-    }
-}
-
-// 4. 彩蛋按鈕監聽
-if(easterEggBtn1) {
-    easterEggBtn1.addEventListener('click', (e) => {
-        e.stopPropagation();
-        playTransition(safeGetVideoPath(currentViewingIndex, 3));
-    });
-}
-
-if(easterEggBtn2) {
-    easterEggBtn2.addEventListener('click', (e) => {
-        e.stopPropagation();
-        playTransition(safeGetVideoPath(currentViewingIndex, 4));
-    });
-}
-
-// 5. 鍵盤操作
-const isActivateKey = (e) => e.key === 'Enter' || e.key === ' ';
-
-// 日期格：Enter / 空白鍵等於點擊
 calendar.addEventListener('keydown', (e) => {
-    if (isActivateKey(e) && e.target.classList.contains('date-cell')) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('date-cell')) {
         e.preventDefault();
         e.target.click();
     }
 });
-
-// 彩蛋圖：可以用 Tab 選到，Enter / 空白鍵播放
-[easterEggBtn1, easterEggBtn2].forEach((btn, n) => {
-    if (!btn) return;
-    btn.setAttribute('role', 'button');
-    btn.setAttribute('tabindex', '0');
-    btn.setAttribute('aria-label', `播放彩蛋影片 ${n + 1}`);
-    btn.addEventListener('keydown', (e) => {
-        if (isActivateKey(e)) {
-            e.preventDefault();
-            e.stopPropagation();
-            btn.click();
-        }
-    });
-});
-
-// 卡片打開時：Enter / 空白鍵 / → 等於點背景（下一步）；影片播放中按 Esc 等於 SKIP
-document.addEventListener('keydown', (e) => {
-    if (videoOverlay.classList.contains('active')) {
-        if (e.key === 'Escape' && skipBtn.classList.contains('visible')) skipVideo();
-        return;
-    }
-    if (!detailView.classList.contains('active')) return;
-    if (e.target.closest && e.target.closest('.egg-item, button, input')) return;
-    if (isActivateKey(e) || e.key === 'ArrowRight') {
-        e.preventDefault();
-        detailOverlay.click();
-        // 關閉卡片後把焦點放回剛剛看的那一格
-        if (!detailView.classList.contains('active')) {
-            const cell = calendar.querySelector(`.date-cell[data-idx="${currentViewingIndex}"]`);
-            if (cell) cell.focus();
-        }
-    }
-});
-
-function closeDetail() {
-    detailView.classList.remove('active');
-    if(detailOverlay) detailOverlay.classList.remove('active');
-    calendar.classList.remove('minimized');
-    
-    // 關閉時重置特效，確保下次打開是圖片
-    if(interactionArea) {
-        interactionArea.classList.remove('reveal-content');
-        interactionArea.classList.remove('show-hint');
-        interactionArea.classList.add('hidden-initially');
-    }
-
-    let justFinished = false;
-    if (currentViewingIndex === unlockedIndex) {
-        unlockedIndex++;
-        localStorage.setItem('loveCalendarProgress', unlockedIndex);
-        justFinished = (unlockedIndex === episodes.length);
-    }
-    renderCalendar();
-    if (justFinished) showFinale();
-}
 
 // ==========================================
 //  完結頁：第 32 天第一次看完時顯示
@@ -597,31 +349,27 @@ function resetProgress() {
 }
 
 // ==========================================
-//  影片預載：只預載一支
+//  預載：只預載一集的開場轉場
 // ==========================================
 // 今天能點的那一格（最新解鎖）優先；今天已經看完，就預載最近看過的那一集。
-// 只載第一段影片，因為點開日期一定先播 video1。
-function preloadLatestVideo() {
+// 有 video1 就預載影片，沒有就預載封面圖（和選集頁同一套，見 episode.js）。
+function preloadLatest() {
     const daysPassed = getDaysPassed();
     let target = (unlockedIndex <= daysPassed) ? unlockedIndex : unlockedIndex - 1;
     target = Math.min(target, episodes.length - 1);
     if (target < 0) return;
-
-    transitionVideo.preload = 'auto';
-    transitionVideo.src = safeGetVideoPath(target, 1);
-    transitionVideo.load();
+    EpisodeView.preload(target);
 }
 
 renderCalendar();
-scaleDetailView();
-preloadLatestVideo();
+preloadLatest();
 
 // ==========================================
 //  跨過午夜時自動解鎖新的一天
 // ==========================================
 // 只在日曆畫面時重繪，避免打斷正在看的影片或卡片
 function refreshIfIdle() {
-    if (videoOverlay.classList.contains('active') || detailView.classList.contains('active')) return;
+    if (EpisodeView.isOpen()) return;
     renderCalendar();
 }
 
@@ -645,12 +393,8 @@ document.addEventListener('visibilitychange', () => {
 // ==========================================
 const RIPPLE_LIFETIME_MS = 2500;
 document.addEventListener('mousedown', function(e) {
-    const videoOverlay = document.getElementById('video-overlay');
-    const detailView = document.getElementById('detail-view');
-    
-    // 如果正在看影片或卡片，就不產生水波
-    if (videoOverlay && videoOverlay.classList.contains('active')) return;
-    if (detailView && detailView.classList.contains('active')) return;
+    // 看轉場、當集內容、彩蛋圖時不產生水波
+    if (EpisodeView.isOpen()) return;
 
     // 建立水波紋元素
     const ripple = document.createElement('div');

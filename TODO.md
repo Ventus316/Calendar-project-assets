@@ -6,8 +6,9 @@
 
 針對各集數內容進行填充與審查，確保體驗完整：
 
-- [ ] **全集數影片填充：** 目前大部分集數使用 `commonVideoURL`，需逐步替換為各集專屬影片（輸出時加 `-movflags +faststart`，命名見 DESIGN.md 4.4）。
-- [ ] **各集圖片（選集頁用）：** EP 02–32 每集補三張圖：`epNN-cover.webp`、`epNN-egg-1.webp`、`epNN-egg-2.webp`，填進 `data.js` 的 `cover`、`easterEggImg`、`easterEggImg2`。EP 01 也可補一張獨立封面。
+- [ ] **全集數影片填充：** 目前只有第一集有影片，其他集用封面圖推近代替，需逐步補上各集專屬影片（輸出時加 `-movflags +faststart`，命名見 DESIGN.md 4.4）。
+- [x] **各集圖片：** 32 集的 `cover`、`easterEggImg`、`easterEggImg2` 都已放上豆瓣高清劇照。
+- [ ] **確認劇照集數：** 多數劇照只是先放滿，集數未確認（見 `assets/images/SOURCES.md`），認出後再對調。
 - [ ] **彩蛋圖片/影片製作：** 針對 32 集內容製作對應的彩蛋素材。
 - [ ] **32 集 - 最終回特殊素材：**
   - [ ] 溫以凡視角影片製作
@@ -24,7 +25,7 @@
 - [x] **三階段狀態機:** 成功實作 Step 0-3 的互動邏輯與內容解鎖。
 - [x] **進度持久化:** 使用 `localStorage` 儲存解鎖進度與起始日期。
 - [x] **水波紋特效:** 結合 `backdrop-filter` 與動態 DOM 產生高質感點擊反饋。
-- [x] **響應式縮放:** 實作 `detail-scaler` 確保不同解析度下的視覺統一。
+- [x] **響應式縮放:** 當集卡片字級隨視窗縮放（原本的 `detail-scaler` 已改由兩頁共用的 `episode.css` 取代）。
 - [x] **影片 faststart:** 影片索引搬到檔頭，邊下載邊播，畫質不變。
 - [x] **圖片轉 WebP:** 圖片總大小從約 4.8 MB 降到約 0.4 MB。
 - [x] **移除未使用的 PixiJS。**

@@ -8,9 +8,8 @@
 //   2. 每幀對 32 張卡「量位置、改樣式」→ 只讀一次 scrollLeft，用序號算出距離再一次寫入
 //   3. 手動滑完沒有對齊               → CSS scroll-snap 交給瀏覽器對齊
 //
-// 素材：當集有影片就播影片（目前只有第一集），沒有就用當集圖片。
-//   cover          → 卡片封面、點開時的轉場圖
-//   easterEggImg/2 → 彩蛋縮圖；有 video3/4 就播影片，沒有就全螢幕看圖
+// 點開某一集之後的轉場、當集卡片、彩蛋圖在 episode.js（和日曆頁共用），
+// 素材怎麼選（有影片播影片，沒有就用當集圖片）也寫在那裡。
 
 const rail = document.getElementById('rail');
 const heroMeta = document.getElementById('hero-meta');
@@ -19,52 +18,12 @@ const heroState = document.getElementById('hero-state');
 const progressBar = document.getElementById('rail-progress-bar');
 const backdrops = [document.getElementById('backdrop-a'), document.getElementById('backdrop-b')];
 
-const intro = document.getElementById('intro');
-const introVideo = document.getElementById('intro-video');
-const introImage = document.getElementById('intro-image');
-const introSkip = document.getElementById('intro-skip');
-
-const detail = document.getElementById('detail');
-const detailCard = document.getElementById('detail-card');
-const detailBg = document.getElementById('detail-bg');
-const detailDate = document.getElementById('detail-date');
-const detailTitle = document.getElementById('detail-title');
-const detailQuote = document.getElementById('detail-quote');
-const detailBottom = document.getElementById('detail-bottom');
-const detailHint = document.getElementById('detail-hint');
-const detailNext = document.getElementById('detail-next');
-const eggsBox = document.getElementById('eggs');
-
-const lightbox = document.getElementById('lightbox');
-const lightboxImg = document.getElementById('lightbox-img');
-
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const IMAGE_INTRO_MS = 3200;
 
 // ==========================================
 //  素材與狀態
 // ==========================================
 let isDevMode = false;
-
-const has = (v) => typeof v === 'string' && v.trim() !== '';
-
-// 只看當集自己的欄位，不用 data.js 的兜底影片（那支是第一集的）
-function mediaOf(i) {
-    const ep = episodes[i];
-    const eggs = [];
-    [[ep.easterEggImg, ep.video3], [ep.easterEggImg2, ep.video4]].forEach(([img, video]) => {
-        if (has(img)) eggs.push({ img, video: has(video) ? video : '' });
-    });
-    let introMedia = null;
-    if (has(ep.video1)) introMedia = { type: 'video', src: ep.video1 };
-    else if (has(ep.cover)) introMedia = { type: 'image', src: ep.cover };
-    return {
-        cover: has(ep.cover) ? ep.cover : '',
-        intro: introMedia,
-        mid: has(ep.video2) ? { type: 'video', src: ep.video2 } : null,
-        eggs
-    };
-}
 
 function statusOf(i) {
     // 開發者模式：每一集都能打開（和日曆頁一樣，目前進度那集顯示為今天）
@@ -73,15 +32,6 @@ function statusOf(i) {
     if (i === unlockedIndex && i <= getDaysPassed()) return 'today';
     return 'locked';
 }
-
-function dateOf(i) {
-    const d = new Date(startDate);
-    d.setDate(startDate.getDate() + i);
-    return d;
-}
-
-const pad = (n) => String(n).padStart(2, '0');
-const fmtDate = (d) => `${pad(d.getMonth() + 1)} / ${pad(d.getDate())}`;
 
 function lockedReason(i) {
     const daysPassed = getDaysPassed();
@@ -296,69 +246,8 @@ function setBackdrop(src) {
 }
 
 // ==========================================
-//  轉場：影片或圖片
+//  打開某一集（轉場、當集卡片在 episode.js）
 // ==========================================
-let introDone = null;
-let introTimers = [];
-
-function playIntro(media, done) {
-    if (!media) { done(); return; }
-    introDone = done;
-    introTimers.forEach(clearTimeout);
-    introTimers = [];
-    intro.classList.remove('is-video', 'is-image', 'show-skip');
-    intro.setAttribute('aria-hidden', 'false');
-
-    if (media.type === 'video') {
-        const abs = new URL(media.src, location.href).href;
-        if (introVideo.src === abs) introVideo.currentTime = 0;   // 已預載就沿用
-        else introVideo.src = media.src;
-        intro.classList.add('is-video', 'active');
-        introVideo.onended = finishIntro;
-        introVideo.play().catch(() => {});
-        introTimers.push(setTimeout(() => intro.classList.add('show-skip'), 5000));
-    } else {
-        introImage.src = media.src;
-        intro.style.setProperty('--intro-ms', `${IMAGE_INTRO_MS}ms`);
-        const start = () => {
-            // 重新觸發推近動畫
-            intro.classList.remove('active');
-            void introImage.offsetWidth;
-            intro.classList.add('is-image', 'active');
-            introTimers.push(setTimeout(() => intro.classList.add('show-skip'), 800));
-            introTimers.push(setTimeout(finishIntro, reducedMotion ? 1200 : IMAGE_INTRO_MS));
-        };
-        introImage.decode().then(start, start);
-    }
-    introSkip.focus({ preventScroll: true });
-}
-
-function finishIntro() {
-    if (!introDone) return;
-    introTimers.forEach(clearTimeout);
-    introTimers = [];
-    introVideo.onended = null;
-    introVideo.pause();
-    intro.classList.remove('active', 'show-skip');
-    intro.setAttribute('aria-hidden', 'true');
-    const done = introDone;
-    introDone = null;
-    done();
-}
-
-introSkip.addEventListener('click', (e) => { e.stopPropagation(); finishIntro(); });
-// 圖片轉場點畫面任何地方都能跳過；影片要等 SKIP 出現
-intro.addEventListener('click', () => {
-    if (intro.classList.contains('is-image') && intro.classList.contains('show-skip')) finishIntro();
-});
-
-// ==========================================
-//  當集內容（和日曆頁同樣的三階段）
-// ==========================================
-// 1：日期＋標題 → 2：語錄＋彩蛋 → 3：See you tomorrow＋明日預告 → 關閉
-let viewing = -1;
-let detailStep = 0;
-
 function openEpisode(i) {
     const status = statusOf(i);
     if (status === 'locked') {
@@ -371,128 +260,12 @@ function openEpisode(i) {
         }
         return;
     }
-
-    viewing = i;
-    const ep = episodes[i];
-    const m = mediaOf(i);
-
-    detailDate.textContent = fmtDate(dateOf(i));
-    detailTitle.textContent = ep.title;
-    detailQuote.innerHTML = ep.quote;
-    detailHint.textContent = ep.nextHint;
-    detailBg.style.backgroundImage = m.cover ? `url("${m.cover}")` : 'none';
-
-    eggsBox.innerHTML = '';
-    m.eggs.forEach((egg, n) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'egg';
-        btn.setAttribute('aria-label', egg.video ? `播放彩蛋影片 ${n + 1}` : `查看彩蛋圖片 ${n + 1}`);
-        btn.innerHTML = `<img src="${egg.img}" alt="">`;
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (egg.video) playIntro({ type: 'video', src: egg.video }, () => detailCard.focus({ preventScroll: true }));
-            else openLightbox(egg.img, btn);
-        });
-        eggsBox.appendChild(btn);
-    });
-
-    setStep(0);
-    playIntro(m.intro, () => {
-        detail.hidden = false;
-        setStep(1);
-        detailCard.focus({ preventScroll: true });
-    });
+    EpisodeView.open(i, (closed, justFinished) => {
+        renderCards();
+        if (justFinished) showFinale();
+        else cards[closed].focus({ preventScroll: true });
+    }, '點一下回到選集');
 }
-
-function setStep(n) {
-    detailStep = n;
-    const hasEggs = eggsBox.children.length > 0;
-    detailTitle.classList.toggle('shown', n >= 1);
-    detailQuote.classList.toggle('shown', n >= 2);
-    detailBottom.classList.toggle('shown', n >= 2);
-    detailBottom.classList.toggle('show-hint', n >= 3);
-    detailNext.textContent = n >= 3 ? '點一下回到選集' : '點一下繼續';
-    // 沒有彩蛋的集數，語錄和明日預告一起出現
-    if (n === 2 && !hasEggs) setStep(3);
-}
-
-function advance() {
-    if (detailStep === 1) {
-        const mid = mediaOf(viewing).mid;
-        if (mid) playIntro(mid, () => { setStep(2); detailCard.focus({ preventScroll: true }); });
-        else setStep(2);
-    } else if (detailStep === 2) {
-        setStep(3);
-    } else if (detailStep === 3) {
-        closeEpisode();
-    }
-}
-
-detail.addEventListener('click', (e) => {
-    if (e.target.closest('.egg')) return;
-    advance();
-});
-
-function closeEpisode() {
-    detail.hidden = true;
-    setStep(0);
-    let justFinished = false;
-    if (viewing === unlockedIndex) {
-        unlockedIndex++;
-        localStorage.setItem('loveCalendarProgress', unlockedIndex);
-        justFinished = unlockedIndex === episodes.length;
-    }
-    const back = viewing;
-    viewing = -1;
-    renderCards();
-    if (justFinished) showFinale();
-    else cards[back].focus({ preventScroll: true });
-}
-
-// ==========================================
-//  彩蛋圖全螢幕
-// ==========================================
-let lightboxReturn = null;
-
-function openLightbox(src, from) {
-    lightboxImg.src = src;
-    lightbox.hidden = false;
-    lightboxReturn = from;
-    lightbox.tabIndex = -1;
-    lightbox.focus();
-}
-
-function closeLightbox() {
-    lightbox.hidden = true;
-    if (lightboxReturn) lightboxReturn.focus();
-}
-
-lightbox.addEventListener('click', closeLightbox);
-
-// ==========================================
-//  鍵盤（打開卡片之後）
-// ==========================================
-detailCard.tabIndex = -1;
-const isActivateKey = (e) => e.key === 'Enter' || e.key === ' ';
-
-document.addEventListener('keydown', (e) => {
-    if (!lightbox.hidden) {
-        if (e.key === 'Escape' || isActivateKey(e)) { e.preventDefault(); closeLightbox(); }
-        return;
-    }
-    if (intro.classList.contains('active')) {
-        if (e.key === 'Escape' && intro.classList.contains('show-skip')) finishIntro();
-        else if (isActivateKey(e)) e.preventDefault();
-        return;
-    }
-    if (detail.hidden) return;
-    if (e.target.closest && e.target.closest('.egg')) return;
-    if (isActivateKey(e) || e.key === 'ArrowRight') {
-        e.preventDefault();
-        advance();
-    }
-});
 
 // ==========================================
 //  提示訊息與完結頁
@@ -574,7 +347,7 @@ document.getElementById('debug-apply').addEventListener('click', () => {
 const RIPPLE_LIFETIME_MS = 2500;
 document.addEventListener('mousedown', (e) => {
     // 看轉場、當集內容、彩蛋圖時不產生水波
-    if (intro.classList.contains('active') || !detail.hidden || !lightbox.hidden) return;
+    if (EpisodeView.isOpen()) return;
     const ripple = document.createElement('div');
     ripple.className = 'click-ripple';
     ripple.style.left = e.clientX + 'px';
@@ -582,22 +355,6 @@ document.addEventListener('mousedown', (e) => {
     document.body.appendChild(ripple);
     setTimeout(() => ripple.remove(), RIPPLE_LIFETIME_MS);
 });
-
-// ==========================================
-//  預載：只預載起始那一集的轉場
-// ==========================================
-function preloadIntro(i) {
-    const media = mediaOf(i).intro;
-    if (!media) return;
-    if (media.type === 'video') {
-        introVideo.preload = 'auto';
-        introVideo.src = media.src;
-        introVideo.load();
-    } else {
-        const img = new Image();
-        img.src = media.src;
-    }
-}
 
 // ==========================================
 //  啟動
@@ -613,7 +370,7 @@ measure();
 const first = startIndex();
 goTo(first, false);
 updateFrame();
-preloadIntro(first);
+EpisodeView.preload(first);
 wakeRail();
 
 // 字型和圖片載完後版面可能還會變，瀏覽器會把捲動位置重設；使用者還沒動過就再對一次
@@ -629,7 +386,7 @@ window.addEventListener('load', () => {
 
 // 跨過午夜、分頁切回來時重新判斷解鎖狀態（看卡片時不打斷）
 function refreshIfIdle() {
-    if (intro.classList.contains('active') || !detail.hidden) return;
+    if (EpisodeView.isOpen()) return;
     renderCards();
 }
 

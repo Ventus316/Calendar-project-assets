@@ -7,6 +7,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap">
+    <link rel="stylesheet" href="./assets/css/episode.css">
     <link rel="stylesheet" href="./assets/css/story.css">
 </head>
 <body>
@@ -34,35 +35,7 @@
         </div>
     </main>
 
-    <!-- 轉場：有影片播影片，沒有影片就用當集圖片 -->
-    <div id="intro" class="intro" aria-hidden="true">
-        <video id="intro-video" playsinline></video>
-        <img id="intro-image" alt="">
-        <button id="intro-skip" type="button">SKIP ⏭</button>
-    </div>
-
-    <!-- 當集內容 -->
-    <div id="detail" class="detail" role="dialog" aria-modal="true" aria-labelledby="detail-title" hidden>
-        <div class="detail-card" id="detail-card">
-            <div class="detail-bg" id="detail-bg" aria-hidden="true"></div>
-            <p class="detail-date" id="detail-date"></p>
-            <h2 class="detail-title step" id="detail-title"></h2>
-            <p class="detail-quote step" id="detail-quote"></p>
-            <div class="detail-bottom step" id="detail-bottom">
-                <div class="eggs" id="eggs"></div>
-                <div class="hint">
-                    <p class="hint-left">See you tomorrow</p>
-                    <p class="hint-right" id="detail-hint"></p>
-                </div>
-            </div>
-            <p class="detail-next" id="detail-next">點一下繼續</p>
-        </div>
-    </div>
-
-    <!-- 彩蛋圖全螢幕 -->
-    <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="彩蛋圖片" hidden>
-        <img id="lightbox-img" alt="">
-    </div>
+    <!-- 轉場、當集內容、彩蛋圖全螢幕由 episode.js 建立（和日曆頁共用） -->
 
     <div id="toast" role="status" aria-live="polite"></div>
 
@@ -89,6 +62,7 @@
 
     <script src="./assets/js/data.js"></script>
     <script src="./assets/js/progress.js"></script>
+    <script src="./assets/js/episode.js"></script>
     <script src="./assets/js/story.js"></script>
 </body>
 </html>
